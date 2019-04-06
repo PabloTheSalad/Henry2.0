@@ -1,0 +1,68 @@
+return {
+	objects = {
+		welcome = { Text,
+			coord = { x = 220, y = 250 },
+			text = "WELCOME TO GAME",
+            font_size = 30,
+            color = engine.Colors.GREEN
+		},
+		press_enter = { Text,
+			coord = { x = 210, y = 300 },
+			text = "press ENTER to start game",
+            font_size = 20,
+            color = engine.Colors.RED
+		},
+		button = { Button,
+			text = { Text,
+				text = "CLICK!",
+				font_size = 100
+			},
+			image = { Static,
+				image = "img/frog.jpg",
+				scale = { x = 1, y = 0.7 }
+			},
+			font = "arial",
+			font_size = 30,
+			scale = { x = 0.3, y = 0.3 },
+			coord = { x = 300, y = 70 },
+			handlers = {
+				mouse_released = function(self) game:set_scene("main") end,
+			}
+		},
+		dialog = { DialogText,
+			text = { Text,
+				text = "Hello",
+				font_size = 20
+			},
+			dialog = dlg {
+						enter = "You see two entities",
+						phr = {
+							{cond = function() return 2 + 2 == 4 end, "Who are you?", "I'm CATMAN!"},
+							{enable = false, "Who are you?", "I'm FISHMAN!"},
+							{"Who are you?", "I'm FROGMAN!",
+								{"Really?!", function(self) return "YEZZ" end},
+								onempty = function(self)
+									self:pop()
+									return nil, "BYE MAN *vanish in air*"
+								end
+							},
+						}
+			},
+			handlers = {
+				key_released = function(self, key)
+					self:dialog_handler(key)
+				end
+			}
+		}
+	},
+	handlers = {
+		key_released = {
+			enter = function(self)
+				game:set_scene("main")
+			end,
+			escape = function(self)
+            	game:quit()
+        	end
+		}
+	}
+}
