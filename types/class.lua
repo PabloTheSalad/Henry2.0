@@ -1,3 +1,4 @@
+-- Объект класса от которого наследуются все остальные классы
 Class = {
 	__type = "Class",
 	__new = function(self, obj)
@@ -10,10 +11,14 @@ Class = {
 	end
 }
 
+-- Возвращает родителя текущего объекта/класса
 function Class:__parent()
 	return getmetatable(self).__index
 end
 
+-- class::Class - класс родитель
+-- создает новый класс наследующийся от class, 
+-- если class == nil, наследуется от Class
 function Class:new(class)
  	if (class) then
  		class.__index = class

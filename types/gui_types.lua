@@ -27,11 +27,20 @@ end
 newtype "DialogText"
 
 function DialogText:draw()
+	love.graphics.push()
+	love.graphics.applyTransform(self:get_transformation())
 	self.text:draw()
+	love.graphics.pop()
 end
 
 function DialogText:load()
 	self.text = load_object(self.text, true, "Text")
+	if (not self.names) then
+		self.names = {
+			{"First", engine.Colors.WHITE}, 
+			{"Second", engine.Colors.BLUE}
+		}	
+	end
 	self:update_text()
 end
 
@@ -49,21 +58,36 @@ function DialogText:dialog_handler(key)
 	end
 end
 
+function DialogText:get_name(n)
+	return self.names[n][1] .. " -- "
+end
+
+function DialogText:get_color(n)
+	return self.names[n][2]
+end
+
 function DialogText:update_text()
 	local x, y = self.dialog:get_text()
 	local z = self.dialog:get_answers()
 	local ans = ""
 	for i = 1, #z do
-		ans = ans .. "\n" .. i .. "." .. z[i]
+		if (i == 1) then
+			ans = i .. "." .. z[i]
+		else
+			ans = ans .. "\n" .. i .. "." .. z[i]
+		end
 	end
 
 	if (x and y) then
-		self.text:raw_set({engine.Colors.GREEN, "YOU: " .. x, engine.Colors.BLUE, "\nIT: " .. y, engine.Colors.WHITE, ans})
+		self.text:set_text({self:get_color(1), self:get_name(1) .. x})
+		_, width = self.text:get_dimensions()
+		self.text:add_text({self:get_color(2), self:get_name(2) .. y})
 	elseif (x) then
-		self.text:raw_set({engine.Colors.GREEN, "YOU: " .. x, engine.Colors.WHITE, ans})
+		self.text:set_text({self:get_color(1), self:get_name(1) .. x})
 	else
-		self.text:raw_set({engine.Colors.BLUE, "IT: " .. y, engine.Colors.WHITE, ans})
+		self.text:set_text({self:get_color(2), self:get_name(2) .. y})
 	end
+	self.text:add_text({engine.Colors.WHITE, ans})
 end
 
 function DialogText:get_dimensions()

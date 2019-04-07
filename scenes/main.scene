@@ -77,18 +77,48 @@ return {
                 self:move(self.speed.x * dt, self.speed.y * dt)
             end
         },
-        dialog = { Text,
+        -- dialog = { Text,
+        --     coord = { x = 150, y = 470 },
+        --     text = "Frog -- The Old World porcupines, or Hystricidae, are large terrestrial rodents, distinguished by the spiny covering from which they take their name. They range over the south of Europe and the Levant, most of Africa, India, and the maritime Southeast Asia as far east as Flores. Although both the Old World and New World porcupine families belong to the Hystricognathi branch of the vast order Rodentia, they are quite different and are not closely related. ",
+        --     color = {0, 255, 0, 255},
+        --     font_size = 11,
+        --     width = 55,
+        --     handlers = {
+        --         key_released = {
+        --             space = function(self)
+        --                 self:set_text({255, 0, 10, 255}, "Red Frog -- WTF Man!?")
+        --             end
+        --         }
+        --     }
+        -- },
+        dialog = { DialogText,
             coord = { x = 150, y = 470 },
-            text = "Frog -- The Old World porcupines, or Hystricidae, are large terrestrial rodents, distinguished by the spiny covering from which they take their name. They range over the south of Europe and the Levant, most of Africa, India, and the maritime Southeast Asia as far east as Flores. Although both the Old World and New World porcupine families belong to the Hystricognathi branch of the vast order Rodentia, they are quite different and are not closely related. ",
-            color = {0, 255, 0, 255},
-            font_size = 11,
-            width = 55,
-            handlers = {
-                key_released = {
-                    space = function(self)
-                        self:set_text({255, 0, 10, 255}, "Red Frog -- WTF Man!?")
-                    end
+            text = { Text,
+                text = "Hello",
+                font_size = 15,
+                font = "arial",
+                width = 110
+            },
+            names = {
+                {"Пиксельный лягух", engine.Colors.GREEN},
+                {"Красный лягух", engine.Colors.RED}
+            },
+            dialog = dlg {
+                enter = "*Вы видите Мистера Красного Лягуха*",
+                phr = {
+                    {"Здравствуй, Мистер красный лягух, как твои дела?", 
+                        "Все весьма неплохо друг мой. Все идет своим чередом",
+                        {"Как семья?", "Живем потихоньку в своем болоте, ондатры нам не докучают",
+                            {"Ондатры?", "Да, конечно, ты разве не знал сколько их развелось в последнее время?"}
+                        },
+                        {"Пока", "До встречи друг мой"}
+                    }
                 }
+            },
+            handlers = {
+                key_released = function(self, key)
+                    self:dialog_handler(key)
+                end
             }
         },
         black_square = { Static,

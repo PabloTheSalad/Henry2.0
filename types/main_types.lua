@@ -1,13 +1,32 @@
+-- File: Основные типы графических объектов
+--[[ 
+    Каждый тип графического объекта создается с помощью функции newtype
+    и должен сожержать данные поля:
+        draw() - отвечает за вывод объекта на экран
+        load() - отвечает за обработку объекта загруженого из .scene файла
+        get_dimensions() - возвращает высоту и ширину объекта
 
+    Необязательные поля:
+        pre_update(dt) - функция вызывается перед вызовом функции update(dt)
+
+]]
+
+-- Тип выводимого на экран текста
 newtype "Text"
+--[[
+    -- Пример объекта класса Text в .scene файле
+    text = { Text, -- Класс объекта
+        text = "Text", -- Текст который необходимо вывести (обязательно)
+        width = 30, -- Максимальная ширина текста
+        font = "arial", -- Название шрифта из папки Fonts
+        font_size = 30, -- Размер шрифта
+        color = {200, 123, 140, 255} -- Цвет текста
+    }
+]]
 
 function Text:draw()
-	if (type(self.text) == "string") then
-	    love.graphics.print(self.text)
-	else
-	    transformation = love.math.newTransform(self.coord.x, self.coord.y, self.rotation, self.scaling.x, self.scaling.y)
-	    love.graphics.draw(self.text, transformation)
-	end
+	transformation = love.math.newTransform(self.coord.x, self.coord.y, self.rotation, self.scaling.x, self.scaling.y)
+    love.graphics.draw(self.text, transformation)
 end
 
 function Text:load()
@@ -21,6 +40,7 @@ function Text:load()
     if (self.color) then
         color = self.color
     end
+    self.raw_text = {color, texti}
     if (self.font) then
         self.text = love.graphics.newText(love.graphics.newFont("fonts/" .. self.font .. ".ttf", self.font_size), {color, texti})
     elseif (self.font_size) then
@@ -28,30 +48,58 @@ function Text:load()
     end
 end
 
-function Text:set_text(clr, text)
-    if (type(self.text) == "string") then
-        self.text = {сlr, split_text(text, self.width)}
+-- clr::{r, g, b, a} - цвет
+-- text::string
+-- Заменяет текст на text цвета clr
+function Text:set_text(text, clr)
+    if (type(text) ~= "table") then
+        self.raw_text = {сlr, split_text(text, self.width)}
+        self.raw_text[1] = clr
+        self.text:set(self.raw_text)
     else
-    	local text = {сlr, split_text(text, self.width)}
-    	text[1] = clr
-        self.text:set(text)
+        self.raw_text = split_colored_text(text, self.width)
+        self.text:set(self.raw_text)
     end
 end
 
-function Text:raw_set(t)
-    if (type(self.text) ~= "string") then
-        -- print_table("1", t)
-        self.text:set(t)
+function Text:add_text(text, newline)
+    if (type(text) ~= "table") then
+        local text = {сlr, "\n" .. split_text(text, self.width)}
+        text[1] = clr
+        self:add_raw_text(text)
+        self.text:add(self.raw_text)
     else
-        self.text = t
+        local text = split_colored_text(text, self.width)
+        text[2] = "\n" .. text[2]
+        self:add_raw_text(text)
+        self.text:set(self.raw_text)
     end
+end
+
+function Text:add_raw_text(text)
+    for _, t in pairs(text) do
+        self.raw_text[#self.raw_text + 1] = t
+    end
+end
+
+-- t::love.grphics.Text
+-- Устанавливает в текст значение t
+function Text:raw_set(t)
+    self.text:set(t)
 end
 
 function Text:get_dimensions(x, y)
     return self.text:getDimensions()
 end
 
+-- Тип для статичных изображений
 newtype "Static"
+--[[
+    -- Пример объекта класса Static в .scene файле
+    background = { Static, -- Класс объекта
+        image = "img/moon.jpg", -- Изображение для вывода
+    }
+]]
 
 function Static:draw()
 	local transformation = self:get_transformation()
@@ -68,7 +116,22 @@ function Static:get_dimensions(x, y)
     return self.image:getDimensions()
 end
 
+-- Тип для анимированных изображений
 newtype "Animated"
+--[[
+    -- Пример объекта класса Animated в .scene файле
+    player = { Animated, -- Класс объекта
+        start_animation = "main", -- Имя начальной анимации
+        animations = { -- Таблица содержащая все анимации
+            main = { -- Создание новой анимации с именем main
+                file = "img/genri.png", -- Файл с спрайтами для анимации
+                size = { x = 64, y = 64 }, -- Размер одного спрайта
+                range = { from = 0, to = 1 }, -- Интервал спрайтов
+                duration = 0.2 -- Длительность анимации в секундах
+            }
+        }
+    }
+]]
 
 function Animated:draw()
 	local tr = love.math.newTransform(self.coord.x, self.coord.y, self.rotation, self.scaling.x, self.scaling.y)
@@ -95,6 +158,12 @@ function Animated:pre_update(dt)
     end
 end
 
+-- name::string - имя новой анимации
+-- filename::string - имя файла с спрайтами анимации
+-- sx::number - ширина кадра
+-- sy::number - высота кадра
+-- rfrom::number, rto::number - с какого и по какой кадр идет анимация (счет с нуля)
+-- dt::number - длительность анимации в секундах
 function Animated:add_animation(name, filename, sx, sy, rfrom, rto, dt)
     if (not self.animation) then
         self.animation = {
@@ -114,6 +183,8 @@ function Animated:add_animation(name, filename, sx, sy, rfrom, rto, dt)
 	}
 end
 
+-- name::string - имя анимации
+-- Устанавливает анимацию с именем name как текущую
 function Animated:set_animation(name)
 	self.animation.current_animation_name = name
 	self.animation.current_animation = self.animation.animations[name]
@@ -122,6 +193,7 @@ function Animated:set_animation(name)
 	self:update_animation_frame()
 end
 
+-- Обновляет кадр анимации
 function Animated:update_animation_frame()
 	local i, j = self.animation.current_animation.sprites:getDimensions()
 	i, j = i / self.animation.current_animation.size.x, j / self.animation.current_animation.size.y

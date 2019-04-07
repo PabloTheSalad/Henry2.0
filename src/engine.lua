@@ -1,5 +1,8 @@
 require("types/class")
 
+-- value - Значение
+-- typ::string - Ожидаемый тип
+-- Вызывает ошибку если тип значения не соответствует ожидаемому
 function assert_type(value, typ)
     if (type(value) ~= typ)
     then 
@@ -7,10 +10,13 @@ function assert_type(value, typ)
     end
 end
 
-function split_text(text, size)
+-- text::string Текст для разделения
+-- size::number Количество символов в одной строке
+-- Делит text на строки с длинной не более size, но без разрыва слов
+function split_text(text, size, len)
     local splitted_text = ""
     local joined_string = ""
-    local lenn = 0
+    local lenn = len or 0
     for split in text:gmatch("[^ ]+") do
         if (split) then
             lenn = lenn + split:len()
@@ -32,12 +38,35 @@ function split_text(text, size)
         end
     end
     if (splitted_text == "") then
-        return joined_string
+        return joined_string, lenn
     else
-        return splitted_text .. "\n" .. joined_string
+        return splitted_text .. "\n" .. joined_string, lenn
     end
 end
 
+function split_colored_text(text, size, newline)
+    local cur_size = 0
+    local new_text = {}
+    for n, tc in pairs(text) do
+        if (n%2 == 1) then
+            new_text[n] = tc
+        else
+            if (tc:len() > size) then
+                new_text[n], cur_size = split_text(tc, size, cur_size)
+            elseif (tc:len() == size and newline) then
+                new_text[n] = tc .. "\n"
+            else
+                new_text[n] = tc
+                cur_size = tc:len()
+            end
+        end
+    end
+    return new_text
+end
+
+-- n::string Имя таблицы
+-- t::table Таблица для вывода
+-- Выводит таблицу t и все вложенные в неё таблицы
 function print_table(n, t)
     if (type(t) ~= "table") then
         print(n, ":", t)
@@ -51,8 +80,11 @@ function print_table(n, t)
 end
 
 engine = {
+    -- Класс графического объекта, родитель для всех классов объектов
     Object = Class:new(),
+    -- Класс графической сцены, хранит объекты и методы их вывода
     Scene = Class:new(),
+    -- Класс игры
     Game = Class:new(),
     Colors = {
         RED = {255, 0, 0, 255},

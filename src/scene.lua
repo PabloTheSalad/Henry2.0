@@ -1,5 +1,7 @@
 require("src/object")
 
+-- Создает новую сцену
+-- return сцена::Scene
 function engine.Scene:new()
     local scene = self:__new {
         objects = {},
@@ -17,7 +19,8 @@ function engine.Scene:new()
     return scene
 end
 
-local spec_func = function(table) --Специальная функция с замыкание для обработки таблиц с нажатиями кнопок
+-- Специальная функция с замыканием для обработки таблиц с нажатиями кнопок
+local spec_func = function(table) 
     local func = function(self, key, scancode, isrepeat)
         for name, func in pairs(table) do
             if (name == key or name == "always" or (name == "enter" and key == "return")) then
@@ -28,6 +31,7 @@ local spec_func = function(table) --Специальная функция с з�
     return func
 end
 
+-- Обрабатывает сырой объект из .scene файла и добавляет его в сцену
 function engine.Scene:load_obj(name, load_obj)
     local obj = load_object(load_obj)
 
@@ -43,6 +47,7 @@ function engine.Scene:load_obj(name, load_obj)
     self:add_object(name, obj.layer, obj)
 end
 
+-- Загружает сцену из .scene файла
 function engine.Scene:load(file)
     local chunk = love.filesystem.load("scenes/" .. file .. ".scene")
     local result = chunk()
@@ -81,6 +86,8 @@ function engine.Scene:load(file)
     end
 end
 
+-- x::number, y::number
+-- запускает обработчики координат курсора
 function engine.Scene:mouse_handler(x, y)
     if (self.handlers and self.handlers.mouse) then
         self.handlers.mouse(self, x, y, button, istouch)
@@ -92,6 +99,10 @@ function engine.Scene:mouse_handler(x, y)
     end
 end
 
+-- x::number, y::number
+-- button::number - номер кнопки
+-- istouch::bool - является ли экран сенсорным
+-- запускает обработчики нажатия мыши, только если переданная точка находится внутри объекта
 function engine.Scene:mouse_pressed_handler(x, y, button, istouch)
     if (self.handlers and self.handlers.mouse_pressed) then
         self.handlers.mouse_pressed(self, x, y, button, istouch)
@@ -103,6 +114,10 @@ function engine.Scene:mouse_pressed_handler(x, y, button, istouch)
     end
 end
 
+-- x::number, y::number
+-- button::number - номер кнопки
+-- istouch::bool - является ли экран сенсорным
+-- запускает обработчики отпускания кнопки мыши, только если переданная точка находится внутри объекта
 function engine.Scene:mouse_released_handler(x, y, button, istouch)
     if (self.handlers and self.handlers.mouse_released) then
         self.handlers.mouse_released(self, x, y, button, istouch)
@@ -114,6 +129,10 @@ function engine.Scene:mouse_released_handler(x, y, button, istouch)
     end
 end
 
+-- key::string - номер кнопки
+-- scancode::string - является ли экран сенсорным
+-- isrepeat::bool - зажата ли кнопка
+-- запускает обработчики нажатия клавиш на клавиатуре
 function engine.Scene:key_pressed_handler(key, scancode, isrepeat)
     if (self.handlers and self.handlers.key_pressed) then
         self.handlers.key_pressed(self, key, scancode, isrepeat)
@@ -125,6 +144,10 @@ function engine.Scene:key_pressed_handler(key, scancode, isrepeat)
     end
 end
 
+-- key::string - номер кнопки
+-- scancode::string - является ли экран сенсорным
+-- isrepeat::bool - зажата ли кнопка
+-- запускает обработчики отпускания клавиш на клавиатуре
 function engine.Scene:key_released_handler(key, scancode, isrepeat)
     if (self.handlers and self.handlers.key_released) then
         self.handlers.key_released(self, key, scancode, isrepeat)
@@ -136,6 +159,11 @@ function engine.Scene:key_released_handler(key, scancode, isrepeat)
     end
 end
 
+-- name::string - имя объекта
+-- layer::number - слой объекта
+-- obj::Object - объект
+-- Добавляет объект obj либо создает новый если obj == nil, в слой layer, либо
+-- в слой "main", если layer == nil
 function engine.Scene:add_object(name, layer, obj)
     if (layer) then
         assert_type(layer, "number")
@@ -158,6 +186,7 @@ function engine.Scene:add_object(name, layer, obj)
     end
 end
 
+-- Выводит все объекты сцены на экран в соответствии с слоями
 function engine.Scene:draw()
     main_layer = self.layers["main"]
     for _, layer in pairs(self.layers) do
@@ -170,6 +199,7 @@ function engine.Scene:draw()
     end
 end
 
+-- Вызывает функцию обновления у всех объектов в сцене
 function engine.Scene:update(dt)
     local x, y = love.mouse.getPosition()
     self:mouse_handler(x, y)
