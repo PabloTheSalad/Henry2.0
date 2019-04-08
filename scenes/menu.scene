@@ -1,4 +1,4 @@
-return {
+scene {
 	objects = {
 		welcome = { Text,
 			coord = { x = 220, y = 250 },
@@ -29,6 +29,20 @@ return {
 				mouse_released = function(self) game:set_scene("main") end,
 			}
 		},
+		cube = { Physical,
+			ptype = "dynamic",
+			scale = { x = 0.2, y = 0.2 },
+			image = { Static,
+				image = "img/frog.jpg"
+			},
+			handlers = {
+				key_pressed = {
+					s = function(self)
+						self.body:applyForce(100*64, 0)
+					end
+				}
+			}
+		}
 	},
 	handlers = {
 		key_released = {

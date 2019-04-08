@@ -34,17 +34,37 @@ end
 -- type::stirng - ожидаемый тип (необязательно)
 -- Обрабатывает сырой объект из .scene файла
 -- return (Обработанный объект)::(Object или его потомок)
-function load_object(load_obj, issimple, type)
+function load_object(load_obj, issimple, typee)
     local type_name, typ = type_from_obj(name, load_obj)
-    if (type) then
-        if (type ~= type_name) then
-            error("Expected type: " .. type .. ", get" .. type_name)
+    if (typee) then
+        if (typee ~= type_name) then
+            error("Expected type: " .. typee .. ", get" .. type_name)
         end
     end
     local obj = typ:new()
 
     for n, t in pairs(load_obj) do
         obj[n] = t
+    end
+
+    if (typ.__fields) then
+        for name, t in pairs(typ.__fields) do
+            if (obj[name]) then
+                local field_type = type(obj[name])
+                if (field_type ~= t) then
+                    if (field_type == "table") then
+                        local type_name, typ = type_from_obj(name, load_obj)
+                        if (type_name ~= t) then
+                            error(game.__load_scene_name .. ": Bad field '" .. name .. "' type, expected " .. t .. " got " .. field_type)
+                        end
+                    else
+                        error(game.__load_scene_name .. ": Bad field '" .. name .. "' type, expected " .. t .. " got " .. field_type)
+                    end
+                end
+            else
+                error(game.__load_scene_name .. ": Expected field '" .. name .. "'' with type " .. t .. " in object of class " .. typ.__name)
+            end
+        end
     end
 
     if (obj.coord) then

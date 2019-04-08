@@ -12,7 +12,12 @@
 ]]
 
 -- Тип выводимого на экран текста
-newtype "Text"
+newtype {
+    name = "Text",
+    fields = {
+        text = "string",
+    }
+}
 --[[
     -- Пример объекта класса Text в .scene файле
     text = { Text, -- Класс объекта
@@ -62,6 +67,9 @@ function Text:set_text(text, clr)
     end
 end
 
+-- text::string
+-- newline::bool
+-- Добавляет к тексту text разделяя их символом новой строки
 function Text:add_text(text, newline)
     if (type(text) ~= "table") then
         local text = {сlr, "\n" .. split_text(text, self.width)}
@@ -93,7 +101,12 @@ function Text:get_dimensions(x, y)
 end
 
 -- Тип для статичных изображений
-newtype "Static"
+newtype {
+    name = "Static",
+    fields = {
+        image = "string"
+    }
+}
 --[[
     -- Пример объекта класса Static в .scene файле
     background = { Static, -- Класс объекта
@@ -117,7 +130,13 @@ function Static:get_dimensions(x, y)
 end
 
 -- Тип для анимированных изображений
-newtype "Animated"
+newtype {
+    name = "Animated",
+    fields = {
+        animations = "table",
+        start_animation = "string",
+    }
+}
 --[[
     -- Пример объекта класса Animated в .scene файле
     player = { Animated, -- Класс объекта
@@ -207,4 +226,78 @@ end
 function Animated:get_dimensions(x, y)
     local _, _, demx, demy = self.animation.current_quad:getViewport()
     return demx, demy
+end
+
+newtype "Physical"
+
+function Physical:draw()
+    if (self.image) then
+        love.graphics.push()
+        love.graphics.applyTransform(self:get_transformation())
+        self.image:draw()
+        love.graphics.pop()
+    end
+end
+
+function Physical:load()
+    local world
+    if (not game.__load_scene.world) then
+        world = love.physics.newWorld(0, 9.81*64/4)
+        game.__load_scene.world = world
+    else
+        world = game.__load_scene.world
+    end
+    self.dcoord = { x = 0, y = 0 }
+    if (self.image) then
+        self.image = load_object(self.image)
+        self.width, self.height = self.image:get_dimensions()
+    end
+    
+    self.width, self.height = self.width * self.scaling.x, self.height * self.scaling.y
+    self.last_body_coord = { x = self.coord.x + self.width/2, y = self.coord.y + self.height/2 }
+    self.body = love.physics.newBody(world, self.coord.x + self.width/2, self.coord.y + self.height/2, self.ptype)
+    self.shape = love.physics.newRectangleShape(self.width, self.height)
+    self.fixture = love.physics.newFixture(self.body, self.shape)
+    self.body:setFixedRotation(true)
+end
+
+function Physical:pre_update(dt)
+    if (self.ptype == "dynamic") then
+        local bcoord = {}
+        bcoord.x = self.last_body_coord.x
+        bcoord.y = self.last_body_coord.y
+        self.last_body_coord = { x = self.body:getX(), y = self.body:getY()}
+        self.coord.x = self.coord.x + (self.last_body_coord.x - bcoord.x)
+        self.coord.y = self.coord.y + (self.last_body_coord.y - bcoord.y)
+    end
+    if (self.image and self.image.pre_update) then
+        self.image:pre_update(dt)
+    end
+end
+
+function Physical:get_dimensions()
+    if (self.image) then
+        return self.image:get_dimensions()
+    else
+        return self.width, self.height
+    end
+end
+
+function Physical:mirror(px, py)
+    if (px) then
+        if (self.scaling.x > 0) then
+            self:move(self.width, 0)
+        else
+            self:move(-self.width, 0)
+        end
+        self:stretch(-1, 1)
+    end
+    if (py) then
+        if (self.scaling.y > 0) then
+            self:move(0, self.height)
+        else
+            self:move(0, -self.height)
+        end
+        self:stretch(1, -1)
+    end
 end

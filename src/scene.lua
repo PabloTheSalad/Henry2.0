@@ -19,11 +19,15 @@ function engine.Scene:new()
     return scene
 end
 
+function scene(s)
+    game.__load_scene = s
+end
+
 -- Специальная функция с замыканием для обработки таблиц с нажатиями кнопок
 local spec_func = function(table) 
     local func = function(self, key, scancode, isrepeat)
         for name, func in pairs(table) do
-            if (name == key or name == "always" or (name == "enter" and key == "return")) then
+            if (name == scancode or name == "any" or (name == "enter" and key == "return")) then
                 func(self, key, scancode, isrepeat)
             end
         end
@@ -49,11 +53,13 @@ end
 
 -- Загружает сцену из .scene файла
 function engine.Scene:load(file)
-    local chunk = love.filesystem.load("scenes/" .. file .. ".scene")
-    local result = chunk()
+    love.filesystem.load("scenes/" .. file .. ".scene")()
+    game.__load_scene_name = file .. ".scene"
+    local result = game.__load_scene
     for name, obj in pairs(result.objects) do
         self:load_obj(name, obj)
     end
+    self.world = result.world
     if (result.handlers) then
         self.handlers = {}
         if (result.handlers.mouse) then
@@ -84,6 +90,8 @@ function engine.Scene:load(file)
             end
         end
     end
+    game.__load_scene = nil
+    game.__load_scene_name = nil
 end
 
 -- x::number, y::number
@@ -211,5 +219,23 @@ function engine.Scene:update(dt)
         if (obj.update) then
             obj:update(dt)
         end
+        if (self.world) then
+            self.world:update(dt)
+        end
     end
+end
+
+function engine.Scene:contact(obj1, obj2)
+    local obj1, obj2 = self.objects[obj1], self.objects[obj2]
+    if (self.world) then
+        local conts = self.world:getContacts()
+        for n, c in pairs(conts) do
+            local f1, f2 = c:getFixtures()
+            if (obj1.body == f1:getBody() and obj2.body == f2:getBody()
+                or obj2.body == f1:getBody() and obj1.body == f2:getBody()) then
+                return true
+            end
+        end
+    end
+    return false
 end

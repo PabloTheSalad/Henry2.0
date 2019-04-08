@@ -56,9 +56,16 @@ end
 -- от Object, также добавляет глобальную переменную с именем типа
 function engine.Game:new_type(type_name, parent)
 	local class = Class:new(parent)
-	class.__name = type_name
-	_G[type_name] = class
-	self.types[type_name] = class
+	if (type(type_name) == "string") then
+		class.__name = type_name
+		_G[type_name] = class
+		self.types[type_name] = class
+	else
+		class.__name = type_name.name
+		class.__fields = type_name.fields
+		_G[class.__name] = class
+		self.types[class.__name] = class
+	end
 end
 
 -- type_name::string - Имя нового типа объекта
@@ -75,6 +82,7 @@ end
 
 -- Выводит текущую сцену на экран
 function engine.Game:draw()
+	-- love.graphics.clear(255, 0, 0, 255)
 	self.scene:draw()
 end
 
@@ -95,6 +103,7 @@ game = engine.Game:new()
 -- О том что ниже смотри документацию Love2D 
 
 function love.load()
+	love.physics.setMeter(64)
 	game:load_file("types/main_types")
 	game:load()
 	local name, version
